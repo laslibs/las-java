@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class LasJava
 {
-    private final String lasString;
+    private String lasString;
 
     public LasJava(String fileSource, Boolean loadFile){
         if(loadFile){
@@ -21,6 +21,16 @@ public class LasJava
             return;
         }
         this.lasString = fileSource;
+    }
+
+    private <T> ArrayList<T[]> chunk(T[] data, int size){
+        ArrayList<T[]> newData = new ArrayList<>();
+        int index = 0;
+        while (index < data.length){
+            newData.add(getSliceOfArray(data, index, index+size));
+            index+=size;
+        }
+        return newData;
     }
 
     private <T> T[] getSliceOfArray(T[] arr, int startIndex, int endIndex) {
@@ -141,5 +151,36 @@ public class LasJava
             throw new LasException("Poorly formatted ~curve section in the file");
         }
         return response;
+    }
+
+    private Double convertToValue(String string) {
+        return Double.parseDouble(string);
+    }
+
+    public ArrayList<String[]> data(){
+        String[] hds = getHeader();
+        int totalHeadersLength = hds.length;
+        String[] data = Arrays.stream(this.lasString.split("~A(?:[\\x20-\\x7E])*(?:\r\n|\r|\n)")[1].trim()
+                        .split("\s+|\n")).map(String::trim)
+                        .toArray(String[]::new);
+        return chunk(data, totalHeadersLength);
+    }
+
+    public String[][] dataStripped(){
+        String[] hds = getHeader();
+        Map<String, Map<String, String>> well = this.getProperty("well");
+        String nullValue = well.get("NULL").get("value");
+        int totalHeadersLength = hds.length;
+        String[] data = Arrays.stream(this.lasString.split("~A(?:[\\x20-\\x7E])*(?:\r\n|\r|\n)")[1].trim()
+                        .split("\s+|\n")).map(String::trim)
+                        .toArray(String[]::new);
+        ArrayList<String[]> con = chunk(data, totalHeadersLength);
+        ArrayList<String[]> filtered = new ArrayList<>();
+        for(String[] str : con){
+            boolean check = Arrays.asList(str).contains(nullValue);
+            if (check) continue;
+            filtered.add(str);
+        }
+        return filtered.toArray(String[][]::new);
     }
 }

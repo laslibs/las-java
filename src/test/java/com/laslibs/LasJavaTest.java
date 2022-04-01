@@ -1,19 +1,13 @@
 package com.laslibs;
 
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.IntStream;
 
-/**
- * Unit test for simple App.
- */
+
 public class LasJavaTest
 {
     // String
@@ -113,5 +107,12 @@ public class LasJavaTest
     public void getHeaderAndDescr(){
         Map<String, String> value = las.getHeaderAndDescr();
         Assert.assertEquals(value.get("DT"), "2  SONIC TRANSIT TIME");
+    }
+
+    @Test
+    public void getDataStripped(){
+        String[][] value = las.dataStripped();
+        Assert.assertEquals(value.length, 3);
+        Assert.assertEquals(value[0][0], "1670.000");
     }
 }
