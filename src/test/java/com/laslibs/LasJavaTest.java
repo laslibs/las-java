@@ -115,4 +115,26 @@ public class LasJavaTest
         Assert.assertEquals(value.length, 3);
         Assert.assertEquals(value[0][0], "1670.000");
     }
+
+    @Test
+    public void toCsv(){
+        Assert.assertTrue(las.toCsv("mainTest"));
+    }
+
+    @Test
+    public void toCsvStripped(){
+        Assert.assertTrue(las.toCsvStripped("mainTest"));
+    }
+
+    @Test
+    public void getColumn(){
+        String[] value = las.getColumn("dept");
+        Assert.assertEquals(value[0], "1670.000");
+    }
+
+    @Test
+    public void getColumnStripped(){
+        String[] value = las.getColumnStripped("dept");
+        Assert.assertEquals(value[0], "1670.000");
+    }
 }

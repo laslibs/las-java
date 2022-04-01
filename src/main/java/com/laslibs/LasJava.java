@@ -1,6 +1,7 @@
 package com.laslibs;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
@@ -157,13 +158,13 @@ public class LasJava
         return Double.parseDouble(string);
     }
 
-    public ArrayList<String[]> data(){
+    public String[][] data(){
         String[] hds = getHeader();
         int totalHeadersLength = hds.length;
         String[] data = Arrays.stream(this.lasString.split("~A(?:[\\x20-\\x7E])*(?:\r\n|\r|\n)")[1].trim()
                         .split("\s+|\n")).map(String::trim)
                         .toArray(String[]::new);
-        return chunk(data, totalHeadersLength);
+        return chunk(data, totalHeadersLength).toArray(String[][]::new);
     }
 
     public String[][] dataStripped(){
@@ -182,5 +183,73 @@ public class LasJava
             filtered.add(str);
         }
         return filtered.toArray(String[][]::new);
+    }
+
+    public int rowCount(){
+        return this.data().length;
+    }
+
+    public int columnCount(){
+        return this.getHeader().length;
+    }
+
+    public String[] getColumn(String column){
+        String[] hds = getHeader();
+        String[][] sB = data();
+        int index = Arrays.asList(hds).indexOf(column.toLowerCase());
+        if(index < 0) index = Arrays.asList(hds).indexOf(column.toUpperCase());
+        if (index < 0) {
+            throw new LasException(column+" Does not exist");
+        }
+        int finalIndex = index;
+        return Arrays.stream(sB).map(c -> c[finalIndex]).toArray(String[]::new);
+    }
+
+    public String[] getColumnStripped(String column){
+        String[] hds = getHeader();
+        String[][] sB = dataStripped();
+        int index = Arrays.asList(hds).indexOf(column.toUpperCase());
+        if(index < 0) index = Arrays.asList(hds).indexOf(column.toLowerCase());
+        if (index < 0) {
+            throw new LasException(column+" Does not exist");
+        }
+        int finalIndex = index;
+        return Arrays.stream(sB).map(c -> c[finalIndex]).toArray(String[]::new);
+    }
+
+    public boolean toCsv(String fileName){
+        try {
+            String[] headers = getHeader();
+            String[][] data = data();
+            prepareCsvAndWrite(fileName, headers, data);
+            System.out.println("Writtern successfullyß");
+            return true;
+        } catch (IOException e) {
+            throw new LasException("An error occurred", e);
+        }
+    }
+    public boolean toCsvStripped(String fileName){
+        try {
+            String[] headers = getHeader();
+            String[][] data = dataStripped();
+            prepareCsvAndWrite(fileName, headers, data);
+            System.out.println("Written successfully");
+            return true;
+        } catch (IOException e) {
+            throw new LasException("An error occurred", e);
+        }
+    }
+
+    private void prepareCsvAndWrite(String fileName, String[] headers, String[][] data) throws IOException {
+        String rHd = String.join(",", headers) + '\n';
+        StringBuilder rDataBuilder = new StringBuilder();
+        for(String[] d: data){
+            rDataBuilder.append(String.join(",", d)).append("\n");
+        }
+        String rData = rDataBuilder.toString();
+        File file = new File(fileName+".csv");
+        FileWriter fileWriter = new FileWriter(file.getPath());
+        fileWriter.write(rHd + rData);
+        fileWriter.close();
     }
 }
