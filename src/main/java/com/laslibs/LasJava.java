@@ -102,4 +102,44 @@ public class LasJava
     public Map<String, Map<String, String>> getWellParams(){
         return getProperty("well");
     }
+
+    public String other(){
+        String otherVal = lasString.split("~O(?:\\w*\s*)*\n\s*")[1];
+        String str = "";
+        if (!otherVal.isEmpty()) {
+          String other = otherVal
+                    .split("~")[0]
+                    .replaceAll("\n\s*/g", " ")
+            .trim();
+            str = removeComment(other);
+        }
+        if (str.length() <= 0) {
+            return "";
+        }
+        return str;
+    }
+
+    public String[] getHeader(){
+        String sth = lasString.split("~C(?:\\w*\s*)*\n\s*")[1].split("~")[0];
+        String uncommentedSth = removeComment(sth).trim();
+        if (uncommentedSth.isEmpty()) {
+            throw new LasException("There is no header in the file");
+        }
+        return Arrays.stream(uncommentedSth.split("\n"))
+                .map(m -> m.trim().split("\s+|[.]")[0])
+                .toArray(String[]::new);
+    }
+
+    public Map<String, String> getHeaderAndDescr(){
+        Map<String, Map<String, String>> cur = this.getProperty("curve");
+        Map<String, String> response = new HashMap<>();
+        for (Map.Entry<String, Map<String, String>> entry : cur.entrySet()) {
+            String desc = entry.getValue().get("description") == "none" ? entry.getKey() : entry.getValue().get("description");
+            response.put(entry.getKey(), desc);
+        }
+        if (response.isEmpty()) {
+            throw new LasException("Poorly formatted ~curve section in the file");
+        }
+        return response;
+    }
 }

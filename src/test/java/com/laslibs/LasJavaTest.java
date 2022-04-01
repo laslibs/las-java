@@ -6,8 +6,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.stream.IntStream;
 
 /**
  * Unit test for simple App.
@@ -16,6 +18,7 @@ public class LasJavaTest
 {
     // String
     String lasString;
+    LasJava las;
     @Before
     public void setup(){
         lasString = "~VERSION INFORMATION\n" +
@@ -66,11 +69,11 @@ public class LasJavaTest
                 "1669.875   123.450 2550.000    0.450  123.450  123.450  110.200  105.600\n" +
                 "1669.750   123.450 2550.000    0.450  123.450  123.450  110.200  105.600\n" +
                 "1669.745   123.450 2550.000    -999.25  123.450  123.450  110.200  105.600";
+        las = new LasJava(lasString, false);
     }
 
     @Test
     public void getMetaVersion(){
-        LasJava las = new LasJava(lasString, false);
         Double version = las.getVersion();
         Assert.assertNotNull(version);
         Assert.assertEquals(version, Double.valueOf("2.0"));
@@ -78,22 +81,37 @@ public class LasJavaTest
 
     @Test
     public void getMetaWrap(){
-        LasJava las = new LasJava(lasString, false);
         Boolean version = las.getWrap();
         Assert.assertFalse(version);
     }
 
     @Test
     public void getCurveParams(){
-        LasJava las = new LasJava(lasString, false);
         Map<String, Map<String, String>> value = las.getCurveParams();
         Assert.assertEquals(value.get("DT").get("unit"), "US/M");
     }
 
     @Test
     public void getWellParams(){
-        LasJava las = new LasJava(lasString, false);
         Map<String, Map<String, String>> value = las.getWellParams();
         Assert.assertEquals(value.get("DATE").get("value"), "13-DEC-86");
+    }
+
+    @Test
+    public void getOther(){
+        String value = las.other();
+        Assert.assertFalse(value.isEmpty());
+    }
+
+    @Test
+    public void getHeader(){
+        String[] value = las.getHeader();
+        Assert.assertTrue(Arrays.asList(value).contains("DT"));
+    }
+
+    @Test
+    public void getHeaderAndDescr(){
+        Map<String, String> value = las.getHeaderAndDescr();
+        Assert.assertEquals(value.get("DT"), "2  SONIC TRANSIT TIME");
     }
 }
