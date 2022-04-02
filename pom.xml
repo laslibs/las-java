@@ -9,8 +9,22 @@
   <version>1.0-SNAPSHOT</version>
 
   <name>las-java</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <url>https://github.com/laslibs</url>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Francis Onyishi</name>
+      <email>onyishif@gmail.com</email>
+      <url>https://github.com/proalgor</url>
+    </developer>
+  </developers>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

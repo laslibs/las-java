@@ -114,6 +114,10 @@ public class LasJava
         return getProperty("well");
     }
 
+    public Map<String, Map<String, String>> getLogParams(){
+        return getProperty("param");
+    }
+
     public String other(){
         String otherVal = lasString.split("~O(?:\\w*\s*)*\n\s*")[1];
         String str = "";

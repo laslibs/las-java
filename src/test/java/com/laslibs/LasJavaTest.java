@@ -47,6 +47,12 @@ public class LasJavaTest
     }
 
     @Test
+    public void getLogParam(){
+        Map<String, Map<String, String>> value = las.getLogParams();
+        Assert.assertEquals(value.get("MATR").get("value"), "SAND");
+    }
+
+    @Test
     public void getOther(){
         String value = las.other();
         Assert.assertFalse(value.isEmpty());
