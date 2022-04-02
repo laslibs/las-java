@@ -7,16 +7,23 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class LasJava
-{
+public class LasJava {
+    /**
+     * Holds the value of the lasString
+     */
     private String lasString;
 
-    public LasJava(String fileSource, Boolean loadFile){
-        if(loadFile){
+    /**
+     * Instantiate Class
+     * @param fileSource filePath | string
+     * @param loadFile boolean
+     */
+    public LasJava(String fileSource, Boolean loadFile) {
+        if (loadFile) {
             File file = new File(fileSource);
             try {
                 this.lasString = new String(Files.readAllBytes(file.toPath()));
-            } catch (IOException exception){
+            } catch (IOException exception) {
                 throw new IllegalArgumentException("Pass a valid file" + exception.getMessage());
             }
             return;
@@ -24,24 +31,24 @@ public class LasJava
         this.lasString = fileSource;
     }
 
-    private <T> ArrayList<T[]> chunk(T[] data, int size){
+    private <T> ArrayList<T[]> chunk(T[] data, int size) {
         ArrayList<T[]> newData = new ArrayList<>();
         int index = 0;
-        while (index < data.length){
-            newData.add(getSliceOfArray(data, index, index+size));
-            index+=size;
+        while (index < data.length) {
+            newData.add(getSliceOfArray(data, index, index + size));
+            index += size;
         }
         return newData;
     }
 
     private <T> T[] getSliceOfArray(T[] arr, int startIndex, int endIndex) {
         return Arrays
-                .copyOfRange (
+                .copyOfRange(
                         arr,
                         startIndex,
                         endIndex);
     }
-    private String removeComment(String input){
+    private String removeComment(String input) {
         return Arrays.stream(
                 input
                 .trim()
@@ -51,22 +58,28 @@ public class LasJava
                 .collect(Collectors.joining("\n"));
     }
 
-    private String[] metaData(){
+    private String[] metaData() {
         String metaPart = this.lasString.split("~V(?:\\w*\\s*)*\\n\\s*")[1]
                 .split("~")[0];
         metaPart = removeComment(metaPart);
         List<String[]> refinedMeta = Arrays.stream(metaPart.split("\n"))
-                .map(m -> getSliceOfArray(m.split("\s{2,}|\s*:"),0,2 ))
+                .map(m -> getSliceOfArray(m.split("\s{2,}|\s*:"), 0, 2))
                 .collect(Collectors.toList());
         return refinedMeta.stream().map(r -> r[1]).toArray(String[]::new);
     }
 
-    public Boolean getWrap(){
+    /**
+     * @return Boolean wrap
+     */
+    public Boolean getWrap() {
         String[] meta = metaData();
         return meta[1].equalsIgnoreCase("yes");
     }
 
-    public Double getVersion(){
+    /**
+     * @return Double version
+     */
+    public Double getVersion() {
         String[] meta = metaData();
         return Double.parseDouble(meta[0]);
     }
@@ -106,19 +119,32 @@ public class LasJava
         return wellProps;
     }
 
-    public Map<String, Map<String, String>> getCurveParams(){
+    /**
+     * @return getCurveParams
+     */
+    public Map<String, Map<String, String>> getCurveParams() {
         return getProperty("curve");
     }
 
-    public Map<String, Map<String, String>> getWellParams(){
+    /**
+     * @return getWellparams
+     */
+    public Map<String, Map<String, String>> getWellParams() {
         return getProperty("well");
     }
 
-    public Map<String, Map<String, String>> getLogParams(){
+    /**
+     * @return getLogParams
+     */
+    public Map<String, Map<String, String>> getLogParams() {
         return getProperty("param");
     }
 
-    public String other(){
+    /**
+     * Extra meta info
+     * @return String
+     */
+    public String other() {
         String otherVal = lasString.split("~O(?:\\w*\s*)*\n\s*")[1];
         String str = "";
         if (!otherVal.isEmpty()) {
@@ -133,8 +159,11 @@ public class LasJava
         }
         return str;
     }
-
-    public String[] getHeader(){
+    /**
+     * get header
+     * @return Array of header keys
+     */
+    public String[] getHeader() {
         String sth = lasString.split("~C(?:\\w*\s*)*\n\s*")[1].split("~")[0];
         String uncommentedSth = removeComment(sth).trim();
         if (uncommentedSth.isEmpty()) {
@@ -145,7 +174,11 @@ public class LasJava
                 .toArray(String[]::new);
     }
 
-    public Map<String, String> getHeaderAndDescr(){
+    /**
+     * get header and description
+     * @return Map of header keys and description string
+     */
+    public Map<String, String> getHeaderAndDescr() {
         Map<String, Map<String, String>> cur = this.getProperty("curve");
         Map<String, String> response = new HashMap<>();
         for (Map.Entry<String, Map<String, String>> entry : cur.entrySet()) {
@@ -162,7 +195,10 @@ public class LasJava
         return Double.parseDouble(string);
     }
 
-    public String[][] data(){
+    /**
+     * @return Data ~A Section
+     */
+    public String[][] data() {
         String[] hds = getHeader();
         int totalHeadersLength = hds.length;
         String[] data = Arrays.stream(this.lasString.split("~A(?:[\\x20-\\x7E])*(?:\r\n|\r|\n)")[1].trim()
@@ -171,7 +207,10 @@ public class LasJava
         return chunk(data, totalHeadersLength).toArray(String[][]::new);
     }
 
-    public String[][] dataStripped(){
+    /**
+     * @return Data stripped of all null values ~A Section
+     */
+    public String[][] dataStripped() {
         String[] hds = getHeader();
         Map<String, Map<String, String>> well = this.getProperty("well");
         String nullValue = well.get("NULL").get("value");
@@ -181,7 +220,7 @@ public class LasJava
                         .toArray(String[]::new);
         ArrayList<String[]> con = chunk(data, totalHeadersLength);
         ArrayList<String[]> filtered = new ArrayList<>();
-        for(String[] str : con){
+        for (String[] str : con) {
             boolean check = Arrays.asList(str).contains(nullValue);
             if (check) continue;
             filtered.add(str);
@@ -189,39 +228,60 @@ public class LasJava
         return filtered.toArray(String[][]::new);
     }
 
-    public int rowCount(){
+    /**
+     * @return rawCount
+     */
+    public int rowCount() {
         return this.data().length;
     }
 
-    public int columnCount(){
+    /**
+     * @return ColumnCount
+     */
+    public int columnCount() {
         return this.getHeader().length;
     }
 
-    public String[] getColumn(String column){
+    /**
+     * Returns a column of data
+     * @param column column name
+     * @return column
+     */
+    public String[] getColumn(String column) {
         String[] hds = getHeader();
         String[][] sB = data();
         int index = Arrays.asList(hds).indexOf(column.toLowerCase());
-        if(index < 0) index = Arrays.asList(hds).indexOf(column.toUpperCase());
+        if (index < 0) index = Arrays.asList(hds).indexOf(column.toUpperCase());
         if (index < 0) {
-            throw new LasException(column+" Does not exist");
+            throw new LasException(column + " Does not exist");
         }
         int finalIndex = index;
         return Arrays.stream(sB).map(c -> c[finalIndex]).toArray(String[]::new);
     }
 
-    public String[] getColumnStripped(String column){
+    /**
+     * Returns a column stripped of its null values
+     * @param column column name
+     * @return column
+     */
+    public String[] getColumnStripped(String column) {
         String[] hds = getHeader();
         String[][] sB = dataStripped();
         int index = Arrays.asList(hds).indexOf(column.toUpperCase());
-        if(index < 0) index = Arrays.asList(hds).indexOf(column.toLowerCase());
+        if (index < 0) index = Arrays.asList(hds).indexOf(column.toLowerCase());
         if (index < 0) {
-            throw new LasException(column+" Does not exist");
+            throw new LasException(column + " Does not exist");
         }
         int finalIndex = index;
         return Arrays.stream(sB).map(c -> c[finalIndex]).toArray(String[]::new);
     }
 
-    public boolean toCsv(String fileName){
+    /**
+     * Convert lasData to CSV
+     * @param fileName string
+     * @return true|false depending on success
+     */
+    public boolean toCsv(String fileName) {
         try {
             String[] headers = getHeader();
             String[][] data = data();
@@ -232,7 +292,13 @@ public class LasJava
             throw new LasException("An error occurred", e);
         }
     }
-    public boolean toCsvStripped(String fileName){
+
+    /**
+     * Convert lasStrippedData to CSV
+     * @param fileName string
+     * @return true|false depending on success
+     */
+    public boolean toCsvStripped(String fileName) {
         try {
             String[] headers = getHeader();
             String[][] data = dataStripped();
@@ -247,11 +313,11 @@ public class LasJava
     private void prepareCsvAndWrite(String fileName, String[] headers, String[][] data) throws IOException {
         String rHd = String.join(",", headers) + '\n';
         StringBuilder rDataBuilder = new StringBuilder();
-        for(String[] d: data){
+        for (String[] d: data) {
             rDataBuilder.append(String.join(",", d)).append("\n");
         }
         String rData = rDataBuilder.toString();
-        File file = new File(fileName+".csv");
+        File file = new File(fileName + ".csv");
         FileWriter fileWriter = new FileWriter(file.getPath());
         fileWriter.write(rHd + rData);
         fileWriter.close();
